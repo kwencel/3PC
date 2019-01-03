@@ -30,7 +30,7 @@ Packet MpiSimpleCommunicator::send(MessageType messageType, const std::string& m
     return packet;
 }
 
-Packet MpiSimpleCommunicator::send(MessageType messageType, const std::string &message, ProcessId recipient, MpiTag tag) {
+Packet MpiSimpleCommunicator::send(MessageType messageType, const std::string& message, ProcessId recipient, MpiTag tag) {
     return send(messageType, message, std::unordered_set<ProcessId> {recipient}, tag);
 }
 
@@ -86,7 +86,7 @@ std::optional<Packet> MpiSimpleCommunicator::receive(long timeoutMillis, MpiTag 
 
         do {
             MPI_Test(&request, &hasReceivedData, &status);
-        } while (not hasReceivedData && duration_cast<milliseconds>(system_clock::now() - timeStarted).count() < timeoutMillis);
+        } while (not hasReceivedData and duration_cast<milliseconds>(system_clock::now() - timeStarted).count() < timeoutMillis);
         if (not hasReceivedData) {
             MPI_Cancel(&request);
             MPI_Request_free(&request);
@@ -105,7 +105,7 @@ std::optional<Packet> MpiSimpleCommunicator::receive(long timeoutMillis, MpiTag 
 
             do {
                 MPI_Test(&request, &hasReceivedData, &status);
-            } while (not hasReceivedData &&
+            } while (not hasReceivedData and
                      duration_cast<milliseconds>(system_clock::now() - timeStarted).count() < timeoutMillis);
             if (not hasReceivedData) {
                 MPI_Cancel(&request);

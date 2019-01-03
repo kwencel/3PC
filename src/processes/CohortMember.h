@@ -24,7 +24,7 @@ public:
                     auto potentialPacket = this->getTaggedCommunicator()->receive(ROUND_TIME, this->defaultTag);
                     if (potentialPacket.has_value()) {
                         auto packet = potentialPacket.value();
-                        if (packet.source == COORDINATOR_ID && packet.messageType == MessageType::CAN_COMMIT) {
+                        if (packet.source == COORDINATOR_ID and packet.messageType == MessageType::CAN_COMMIT) {
                             this->logWithState("Received CAN_COMMIT request from the coordinator");
                             this->communicator->send(MessageType::COMMIT_AGREE, "Y", COORDINATOR_ID);
                             this->logWithState("Sent COMMIT_AGREE to coordinator's CAN_COMMIT request");

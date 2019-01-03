@@ -1,8 +1,8 @@
 #include <logging/Logger.h>
 #include "MpiOptimizedCommunicator.h"
 
-Packet MpiOptimizedCommunicator::send(MessageType messageType, const std::string &message,
-                                      const std::unordered_set<ProcessId> &recipients, MpiTag tag) {
+Packet MpiOptimizedCommunicator::send(MessageType messageType, const std::string& message,
+                                      const std::unordered_set<ProcessId>& recipients, MpiTag tag) {
 
     std::lock_guard<std::recursive_mutex> lock(communicationMutex);
     std::string finalMessage = encode(++currentLamportTime, messageType, message);

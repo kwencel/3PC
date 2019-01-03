@@ -123,7 +123,7 @@ private:
 
     template <typename Container>
     bool checkPackets(Container packets, MessageType expectedType, const std::string& expectedMessage) {
-        return std::all_of(packets.begin(), packets.end(), [&](Packet p) { return p.messageType == expectedType &&
+        return std::all_of(packets.begin(), packets.end(), [&](Packet p) { return p.messageType == expectedType and
                                                                                   p.message == expectedMessage; });
     }
 
@@ -135,7 +135,7 @@ private:
             if (processToKill == this->communicator->getProcessId()) {
                 this->crashSignalReceived = true;
                 Logger::log("Killing the coordinator");
-            } else if (processToKill >= 0 && processToKill < this->communicator->getNumberOfProcesses()) {
+            } else if (processToKill >= 0 and processToKill < this->communicator->getNumberOfProcesses()) {
                 this->getTaggedCommunicator()->send(MessageType::CRASH, "", processToKill, this->crashTag);
                 Logger::log(util::concat("Killing the process ", processToKill));
             } else {

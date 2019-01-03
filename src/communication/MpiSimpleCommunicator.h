@@ -18,11 +18,11 @@ struct RawPacket {
     EncodedMessageType messageType;
     EncodedNextPacketLength nextPacketLength;
 
-    inline bool operator==(const RawPacket &other) const {
+    inline bool operator==(const RawPacket& other) const {
         return messageType == other.messageType && nextPacketLength == other.nextPacketLength;
     }
 
-    inline bool operator<(const RawPacket &other) const {
+    inline bool operator<(const RawPacket& other) const {
         return lamportTime < other.lamportTime;
     }
 };
@@ -30,7 +30,7 @@ struct RawPacket {
 namespace std {
     template<>
     struct hash<RawPacket> {
-        inline std::size_t operator()(const RawPacket &packet) const {
+        inline std::size_t operator()(const RawPacket& packet) const {
             std::size_t hash = 0;
             hashCombine(hash, packet.messageType, packet.nextPacketLength);
             return hash;

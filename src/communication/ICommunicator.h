@@ -23,7 +23,7 @@ struct Packet {
 namespace std {
     template<>
     struct hash<Packet> {
-        inline std::size_t operator()(const Packet &packet) const {
+        inline std::size_t operator()(const Packet& packet) const {
             std::size_t hash = 0;
             hashCombine(hash, packet.source, packet.messageType, packet.message);
             return hash;

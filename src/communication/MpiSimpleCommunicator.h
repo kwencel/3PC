@@ -5,6 +5,7 @@
 #include <mutex>
 #include <util/Utils.h>
 #include "ICommunicator.h"
+#include "ITaggedCommunicator.h"
 
 #define MPI_DEFAULT_TAG 0
 
@@ -37,28 +38,28 @@ namespace std {
     };
 }
 
-using Tag = int;
+using MpiTag = int;
 
-class MpiSimpleCommunicator : public ICommunicator {
+class MpiSimpleCommunicator : public ITaggedCommunicator<MpiTag> {
 public:
 
-    virtual Packet send(MessageType messageType, const std::string& message, const std::unordered_set<ProcessId>& recipients, Tag tag);
+    Packet send(MessageType messageType, const std::string& message, const std::unordered_set<ProcessId>& recipients, MpiTag tag) override;
 
-    Packet send(MessageType messageType, const std::string& message, ProcessId recipient, Tag tag);
+    Packet send(MessageType messageType, const std::string& message, ProcessId recipient, MpiTag tag) override;
 
     Packet send(MessageType messageType, const std::string& message, const std::unordered_set<ProcessId>& recipients) override;
 
     Packet send(MessageType messageType, const std::string& message, ProcessId recipient) override;
 
-    Packet sendOthers(MessageType messageType, const std::string& message, Tag tag);
+    Packet sendOthers(MessageType messageType, const std::string& message, MpiTag tag) override;
 
     Packet sendOthers(MessageType messageType, const std::string& message) override;
 
-    virtual Packet receive(Tag tag);
+    Packet receive(MpiTag tag) override;
 
     Packet receive() override;
 
-    virtual std::optional<Packet> receive(long timeoutMillis, Tag tag);
+    std::optional<Packet> receive(long timeoutMillis, MpiTag tag) override;
 
     std::optional<Packet> receive(long timeoutMillis) override;
 

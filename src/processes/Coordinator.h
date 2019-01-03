@@ -5,89 +5,90 @@
 #include <logging/Logger.h>
 #include "AbstractCrashableProcess.h"
 
-class Coordinator : public AbstractCrashableProcess {
+template <typename Tag>
+class Coordinator : public AbstractCrashableProcess<Tag> {
 public:
 
-    explicit Coordinator(std::shared_ptr<MpiSimpleCommunicator> communicator)
-        : AbstractCrashableProcess(std::move(communicator), MPI_CRASH_TAG) {
+    explicit Coordinator(std::shared_ptr<ITaggedCommunicator<Tag>> communicator, Tag defaultTag, Tag crashTag)
+        : AbstractCrashableProcess<Tag>(std::move(communicator), defaultTag, crashTag) {
         std::thread([&]{ processCrashInput(); }).detach();
-        state = Q;
+        this->state = Q;
     }
 
     void run() override {
         Logger::log("Initializing 3PC");
         sleep();
-        crashIfSignalled();
-        while (not terminate) {
-            switch (state) {
+        this->crashIfSignalled();
+        while (not this->terminate) {
+            switch (this->state) {
                 case Q: {
-                    logWithState("Entered state Q");
-                    communicator->sendOthers(MessageType::CAN_COMMIT, "");
-                    logWithState("Sent CAN_COMMIT to the cohort");
-                    state = W;
+                    this->logWithState("Entered state Q");
+                    this->communicator->sendOthers(MessageType::CAN_COMMIT, "");
+                    this->logWithState("Sent CAN_COMMIT to the cohort");
+                    this->state = W;
                     break;
                 }
                 case W: {
-                    logWithState("Entered state W");
+                    this->logWithState("Entered state W");
                     auto potentialPackets = receiveFromAll(ROUND_TIME);
-                    logWithState("Finished gathering responses for CAN_COMMIT from the cohort");
+                    this->logWithState("Finished gathering responses for CAN_COMMIT from the cohort");
                     if (potentialPackets.has_value()) {
                         auto packets = potentialPackets.value();
                         if (checkPackets(packets, MessageType::COMMIT_AGREE, "Y")) {
-                            logWithState("Got positive response from every cohort member for CAN_COMMIT request");
-                            communicator->sendOthers(MessageType::PREPARE_COMMIT, "");
-                            logWithState("Sent PREPARE_COMMIT to the cohort");
-                            state = P;
+                            this->logWithState("Got positive response from every cohort member for CAN_COMMIT request");
+                            this->communicator->sendOthers(MessageType::PREPARE_COMMIT, "");
+                            this->logWithState("Sent PREPARE_COMMIT to the cohort");
+                            this->state = P;
                             break;
                         }
-                        logWithState("Some cohort members did not agree to commit");
+                        this->logWithState("Some cohort members did not agree to commit");
                     } else {
-                        logWithState("There was a timeout - some cohort members did not sent their vote");
+                        this->logWithState("There was a timeout - some cohort members did not sent their vote");
                     }
-                    communicator->sendOthers(MessageType::DO_ABORT, "");
-                    logWithState("Sent DO_ABORT to the cohort because did not get agreement from every cohort member");
-                    state = A;
+                    this->communicator->sendOthers(MessageType::DO_ABORT, "");
+                    this->logWithState("Sent DO_ABORT to the cohort because did not get agreement from every cohort member");
+                    this->state = A;
                     break;
                 }
                 case P: {
-                    logWithState("Entered state P");
+                    this->logWithState("Entered state P");
                     auto potentialPackets = receiveFromAll(ROUND_TIME);
-                    logWithState("Finished gathering responses for PREPARE_COMMIT from the cohort");
+                    this->logWithState("Finished gathering responses for PREPARE_COMMIT from the cohort");
                     if (potentialPackets.has_value()) {
                         if (checkPackets(potentialPackets.value(), MessageType::COMMIT_ACK, "")) {
-                            logWithState("Got COMMIT_ACK from every cohort member");
-                            communicator->sendOthers(MessageType::DO_COMMIT, "");
-                            logWithState("Sent DO_COMMIT to the cohort");
-                            state = C;
+                            this->logWithState("Got COMMIT_ACK from every cohort member");
+                            this->communicator->sendOthers(MessageType::DO_COMMIT, "");
+                            this->logWithState("Sent DO_COMMIT to the cohort");
+                            this->state = C;
                             break;
                         }
-                        logWithState("Some cohort members sent an unexpected message");
+                        this->logWithState("Some cohort members sent an unexpected message");
                     } else {
-                        logWithState("There was a timeout - some cohort member did not acknowledge");
+                        this->logWithState("There was a timeout - some cohort member did not acknowledge");
                     }
-                    communicator->sendOthers(MessageType::DO_ABORT, "");
-                    logWithState("Sent DO_ABORT to the cohort because of a missing acknowledgement");
-                    state = A;
+                    this->communicator->sendOthers(MessageType::DO_ABORT, "");
+                    this->logWithState("Sent DO_ABORT to the cohort because of a missing acknowledgement");
+                    this->state = A;
                     break;
                 }
                 case A: {
-                    logWithState("Entered state A - aborted the transaction!");
-                    terminate = true;
+                    this->logWithState("Entered state A - aborted the transaction!");
+                    this->terminate = true;
                     return;
                 };
                 case C: {
-                    logWithState("Entered state C - committed the transaction!");
-                    terminate = true;
+                    this->logWithState("Entered state C - committed the transaction!");
+                    this->terminate = true;
                     return;
                 }
             }
             sleep();
-            crashIfSignalled();
+            this->crashIfSignalled();
         }
     }
 
     void sleep() override {
-        std::this_thread::sleep_for(std::chrono::milliseconds(random.randomBetween(MIN_SLEEP_TIME_COORDINATOR, MAX_SLEEP_TIME_COORDINATOR)));
+        std::this_thread::sleep_for(std::chrono::milliseconds(this->random.randomBetween(MIN_SLEEP_TIME_COORDINATOR, MAX_SLEEP_TIME_COORDINATOR)));
     }
 
 private:
@@ -103,14 +104,14 @@ private:
         std::unordered_set<Packet> packets;
         auto timeStarted = system_clock::now();
         do {
-            auto communicator = getMpiCommunicator();
+            auto taggedCommunicator = this->getTaggedCommunicator();
             auto remainingTimeout = timeoutMillis - duration_cast<milliseconds>(system_clock::now() - timeStarted).count();
-            auto optionalPacket = communicator->receive(remainingTimeout, MPI_DEFAULT_TAG);
+            auto optionalPacket = taggedCommunicator->receive(remainingTimeout, this->defaultTag);
             if (optionalPacket.has_value()) {
                 auto packet = optionalPacket.value();
                 packets.insert(packet);
                 responders.insert(packet.source);
-                if (responders.size() == (unsigned) communicator->getNumberOfProcesses() - 1) {
+                if (responders.size() == (unsigned) taggedCommunicator->getNumberOfProcesses() - 1) {
                     return packets;
                 }
             } else {
@@ -131,11 +132,11 @@ private:
             Logger::registerThread("Input");
             ProcessId processToKill;
             std::cin >> processToKill;
-            if (processToKill == communicator->getProcessId()) {
-                crashSignalReceived = true;
+            if (processToKill == this->communicator->getProcessId()) {
+                this->crashSignalReceived = true;
                 Logger::log("Killing the coordinator");
-            } else if (processToKill >= 0 && processToKill < communicator->getNumberOfProcesses()) {
-                getMpiCommunicator()->send(MessageType::CRASH, "", processToKill, MPI_CRASH_TAG);
+            } else if (processToKill >= 0 && processToKill < this->communicator->getNumberOfProcesses()) {
+                this->getTaggedCommunicator()->send(MessageType::CRASH, "", processToKill, this->crashTag);
                 Logger::log(util::concat("Killing the process ", processToKill));
             } else {
                 Logger::log(util::concat("Unexpected input '", processToKill, "'", " - ignoring"));

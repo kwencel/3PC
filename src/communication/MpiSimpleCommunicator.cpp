@@ -3,7 +3,7 @@
 #include "MpiSimpleCommunicator.h"
 
 Packet MpiSimpleCommunicator::send(MessageType messageType, const std::string& message,
-                                   const std::unordered_set<ProcessId>& recipients, Tag tag) {
+                                   const std::unordered_set<ProcessId>& recipients, MpiTag tag) {
 
     std::lock_guard<std::recursive_mutex> lock(communicationMutex);
 
@@ -30,7 +30,7 @@ Packet MpiSimpleCommunicator::send(MessageType messageType, const std::string& m
     return packet;
 }
 
-Packet MpiSimpleCommunicator::send(MessageType messageType, const std::string &message, ProcessId recipient, Tag tag) {
+Packet MpiSimpleCommunicator::send(MessageType messageType, const std::string &message, ProcessId recipient, MpiTag tag) {
     return send(messageType, message, std::unordered_set<ProcessId> {recipient}, tag);
 }
 
@@ -42,7 +42,7 @@ Packet MpiSimpleCommunicator::send(MessageType messageType, const std::string& m
     return send(messageType, message, std::unordered_set<ProcessId> {recipient});
 }
 
-Packet MpiSimpleCommunicator::sendOthers(MessageType messageType, const std::string& message, Tag tag) {
+Packet MpiSimpleCommunicator::sendOthers(MessageType messageType, const std::string& message, MpiTag tag) {
     return send(messageType, message, otherProcesses, tag);
 }
 
@@ -50,7 +50,7 @@ Packet MpiSimpleCommunicator::sendOthers(MessageType messageType, const std::str
     return sendOthers(messageType, message, MPI_DEFAULT_TAG);
 }
 
-Packet MpiSimpleCommunicator::receive(Tag tag) {
+Packet MpiSimpleCommunicator::receive(MpiTag tag) {
     MPI_Status status;
     RawPacket rawPacket;
     MPI_Recv(&rawPacket, 1, mpiRawPacketType, MPI_ANY_SOURCE, tag, MPI_COMM_WORLD, &status);
@@ -73,7 +73,7 @@ Packet MpiSimpleCommunicator::receive() {
     return receive(MPI_ANY_TAG);
 }
 
-std::optional<Packet> MpiSimpleCommunicator::receive(long timeoutMillis, Tag tag) {
+std::optional<Packet> MpiSimpleCommunicator::receive(long timeoutMillis, MpiTag tag) {
     using namespace std::chrono;
     MPI_Status status;
     int hasReceivedData;

@@ -8,11 +8,11 @@ public:
 
     MpiOptimizedCommunicator(int argc, char** argv);
 
-    Packet send(MessageType messageType, const std::string& message, const std::unordered_set<ProcessId>& recipients, Tag tag) override;
+    Packet send(MessageType messageType, const std::string& message, const std::unordered_set<ProcessId>& recipients, MpiTag tag) override;
 
-    Packet receive(Tag tag) override;
+    Packet receive(MpiTag tag) override;
 
-    std::optional<Packet> receive(long timeoutMillis, Tag tag) override;
+    std::optional<Packet> receive(long timeoutMillis, MpiTag tag) override;
 
 protected:
 

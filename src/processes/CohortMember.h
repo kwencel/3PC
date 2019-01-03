@@ -5,101 +5,102 @@
 #include <logging/Logger.h>
 #include "AbstractProcess.h"
 
-class CohortMember : public AbstractCrashableProcess {
+template <typename Tag>
+class CohortMember : public AbstractCrashableProcess<Tag> {
 public:
 
-    explicit CohortMember(std::shared_ptr<MpiSimpleCommunicator> communicator)
-        : AbstractCrashableProcess(std::move(communicator), MPI_CRASH_TAG) {
-        state = Q;
+    explicit CohortMember(std::shared_ptr<ITaggedCommunicator<Tag>> communicator, Tag defaultTag, Tag crashTag)
+        : AbstractCrashableProcess<Tag>(std::move(communicator), defaultTag, crashTag) {
+        this->state = Q;
     }
 
     void run() override {
-        sleep();
-        crashIfSignalled();
-        while (not terminate) {
-            switch (state) {
+        this->sleep();
+        this->crashIfSignalled();
+        while (not this->terminate) {
+            switch (this->state) {
                 case Q: {
-                    logWithState("Entered state Q");
-                    auto potentialPacket = getMpiCommunicator()->receive(ROUND_TIME, MPI_DEFAULT_TAG);
+                    this->logWithState("Entered state Q");
+                    auto potentialPacket = this->getTaggedCommunicator()->receive(ROUND_TIME, this->defaultTag);
                     if (potentialPacket.has_value()) {
                         auto packet = potentialPacket.value();
                         if (packet.source == COORDINATOR_ID && packet.messageType == MessageType::CAN_COMMIT) {
-                            logWithState("Received CAN_COMMIT request from the coordinator");
-                            communicator->send(MessageType::COMMIT_AGREE, "Y", COORDINATOR_ID);
-                            logWithState("Sent COMMIT_AGREE to coordinator's CAN_COMMIT request");
-                            state = W;
+                            this->logWithState("Received CAN_COMMIT request from the coordinator");
+                            this->communicator->send(MessageType::COMMIT_AGREE, "Y", COORDINATOR_ID);
+                            this->logWithState("Sent COMMIT_AGREE to coordinator's CAN_COMMIT request");
+                            this->state = W;
                             break;
                         }
-                        logUnexpectedPacket(packet);
+                        this->logUnexpectedPacket(packet);
                     } else {
-                        logWithState("There was a timeout when receiving CAN_COMMIT");
-                        communicator->send(MessageType::DO_ABORT, "", COORDINATOR_ID);
-                        logWithState("Sent DO_ABORT to coordinator");
-                        state = A;
+                        this->logWithState("There was a timeout when receiving CAN_COMMIT");
+                        this->communicator->send(MessageType::DO_ABORT, "", COORDINATOR_ID);
+                        this->logWithState("Sent DO_ABORT to coordinator");
+                        this->state = A;
                     }
                     break;
                 }
                 case W: {
-                    logWithState("Entered state W");
-                    auto potentialPacket = getMpiCommunicator()->receive(ROUND_TIME, MPI_DEFAULT_TAG);
+                    this->logWithState("Entered state W");
+                    auto potentialPacket = this->getTaggedCommunicator()->receive(ROUND_TIME, this->defaultTag);
                     if (potentialPacket.has_value()) {
                         auto packet = potentialPacket.value();
                         if (packet.source == COORDINATOR_ID) {
                             if (packet.messageType == MessageType::PREPARE_COMMIT) {
-                                logWithState("Received PREPARE_COMMIT request from the coordinator");
-                                communicator->send(MessageType::COMMIT_ACK, "", COORDINATOR_ID);
-                                logWithState("Sent COMMIT_ACK to coordinator's PREPARE_COMMIT request");
-                                state = P;
+                                this->logWithState("Received PREPARE_COMMIT request from the coordinator");
+                                this->communicator->send(MessageType::COMMIT_ACK, "", COORDINATOR_ID);
+                                this->logWithState("Sent COMMIT_ACK to coordinator's PREPARE_COMMIT request");
+                                this->state = P;
                                 break;
                             } else if (packet.messageType == MessageType::DO_ABORT) {
-                                logWithState("Received DO_ABORT request from the coordinator");
-                                state = A;
+                                this->logWithState("Received DO_ABORT request from the coordinator");
+                                this->state = A;
                                 break;
                             }
                         }
-                        logUnexpectedPacket(packet);
+                        this->logUnexpectedPacket(packet);
                     } else {
-                        logWithState("There was a timeout when receiving PREPARE_COMMIT or DO_ABORT");
-                        state = A;
+                        this->logWithState("There was a timeout when receiving PREPARE_COMMIT or DO_ABORT");
+                        this->state = A;
                     }
                     break;
                 }
                 case P: {
-                    logWithState("Entered state P");
-                    auto potentialPacket = getMpiCommunicator()->receive(ROUND_TIME, MPI_DEFAULT_TAG);
+                    this->logWithState("Entered state P");
+                    auto potentialPacket = this->getTaggedCommunicator()->receive(ROUND_TIME, this->defaultTag);
                     if (potentialPacket.has_value()) {
                         auto packet = potentialPacket.value();
                         if (packet.source == COORDINATOR_ID) {
                             if (packet.messageType == MessageType::DO_COMMIT) {
-                                logWithState("Received DO_COMMIT from the coordinator");
-                                state = C;
+                                this->logWithState("Received DO_COMMIT from the coordinator");
+                                this->state = C;
                                 break;
                             } else if (packet.messageType == MessageType::DO_ABORT) {
-                                logWithState("Received DO_ABORT from the coordinator");
-                                state = A;
+                                this->logWithState("Received DO_ABORT from the coordinator");
+                                this->state = A;
                                 break;
                             }
                         }
-                        logUnexpectedPacket(packet);
+                        this->logUnexpectedPacket(packet);
                     } else {
-                        logWithState("There was a timeout when receiving DO_COMMIT or DO_ABORT");
-                        state = C;
+                        this->logWithState("There was a timeout when receiving DO_COMMIT or DO_ABORT");
+                        this->state = C;
                     }
                     break;
                 }
                 case A: {
-                    logWithState("Entered state A - aborted the transaction!");
-                    terminate = true;
+                    this->logWithState("Entered state A - aborted the transaction!");
+                    this->terminate = true;
                     return;
                 };
                 case C: {
-                    logWithState("Entered state C - committed the transaction!");
-                    terminate = true;
+                    this->logWithState("Entered state C - committed the transaction!");
+                    this->terminate = true;
                     return;
                 }
             }
-            sleep();
-            crashIfSignalled();
+            this->sleep();
+            this->crashIfSignalled();
         }
     }
 };

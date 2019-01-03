@@ -1,4 +1,3 @@
-#include <communication/MpiSimpleCommunicator.h>
 #include <communication/MpiOptimizedCommunicator.h>
 #include <processes/Coordinator.h>
 #include <processes/CohortMember.h>
@@ -10,10 +9,10 @@ int main(int argc, char** argv) {
     Logger::registerThread("Main ");
 
     if (communicator->getProcessId() == COORDINATOR_ID) {
-        Coordinator coordinator(communicator);
+        Coordinator<MpiTag> coordinator(communicator, MPI_DEFAULT_TAG, MPI_CRASH_TAG);
         coordinator.run();
     } else {
-        CohortMember cohortMember(communicator);
+        CohortMember<MpiTag> cohortMember(communicator, MPI_DEFAULT_TAG, MPI_CRASH_TAG);
         cohortMember.run();
     }
 }

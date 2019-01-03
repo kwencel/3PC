@@ -2,7 +2,7 @@
 #include "MpiOptimizedCommunicator.h"
 
 Packet MpiOptimizedCommunicator::send(MessageType messageType, const std::string &message,
-                                      const std::unordered_set<ProcessId> &recipients, Tag tag) {
+                                      const std::unordered_set<ProcessId> &recipients, MpiTag tag) {
 
     std::lock_guard<std::recursive_mutex> lock(communicationMutex);
     std::string finalMessage = encode(++currentLamportTime, messageType, message);
@@ -19,7 +19,7 @@ Packet MpiOptimizedCommunicator::send(MessageType messageType, const std::string
     };
 }
 
-Packet MpiOptimizedCommunicator::receive(Tag tag) {
+Packet MpiOptimizedCommunicator::receive(MpiTag tag) {
     MPI_Status status;
     int messageLength;
 
@@ -36,7 +36,7 @@ Packet MpiOptimizedCommunicator::receive(Tag tag) {
     return packet;
 }
 
-std::optional<Packet> MpiOptimizedCommunicator::receive(long timeoutMillis, Tag tag) {
+std::optional<Packet> MpiOptimizedCommunicator::receive(long timeoutMillis, MpiTag tag) {
     using namespace std::chrono;
     MPI_Status status;
     int hasReceivedData;

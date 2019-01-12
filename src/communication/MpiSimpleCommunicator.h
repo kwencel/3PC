@@ -3,12 +3,14 @@
 
 #include <mpi.h>
 #include <mutex>
-#include <util/Utils.h>
-#include "ICommunicator.h"
 #include "ITaggedCommunicator.h"
 
 #define MPI_DEFAULT_TAG 0
 
+// The following 'using' and 'define' sections always have to match
+#define MPI_ENCODED_LAMPORT_TIME MPI_UINT64_T
+#define MPI_ENCODED_MESSAGE_TYPE MPI_UINT8_T
+#define MPI_NEXT_PACKET_LENGTH MPI_UINT32_T
 using EncodedLamportTime = uint64_t;
 using EncodedMessageType = uint8_t;
 using EncodedNextPacketLength = uint32_t;
@@ -45,16 +47,6 @@ public:
 
     Packet send(MessageType messageType, const std::string& message, const std::unordered_set<ProcessId>& recipients, MpiTag tag) override;
 
-    Packet send(MessageType messageType, const std::string& message, ProcessId recipient, MpiTag tag) override;
-
-    Packet send(MessageType messageType, const std::string& message, const std::unordered_set<ProcessId>& recipients) override;
-
-    Packet send(MessageType messageType, const std::string& message, ProcessId recipient) override;
-
-    Packet sendOthers(MessageType messageType, const std::string& message, MpiTag tag) override;
-
-    Packet sendOthers(MessageType messageType, const std::string& message) override;
-
     Packet receive(MpiTag tag) override;
 
     Packet receive() override;
@@ -62,6 +54,8 @@ public:
     std::optional<Packet> receive(long timeoutMillis, MpiTag tag) override;
 
     std::optional<Packet> receive(long timeoutMillis) override;
+
+    MpiTag getDefaultTag() const override;
 
     LamportTime getCurrentLamportTime() override;
 

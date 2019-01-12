@@ -37,11 +37,15 @@ namespace std {
 class ICommunicator {
 public:
 
-    virtual Packet send(MessageType messageType, const std::string& message, ProcessId recipient) = 0;
-
     virtual Packet send(MessageType messageType, const std::string& message, const std::unordered_set<ProcessId>& recipients) = 0;
 
-    virtual Packet sendOthers(MessageType messageType, const std::string& message) = 0;
+    virtual Packet send(MessageType messageType, const std::string& message, ProcessId recipient) {
+        return send(messageType, message, std::unordered_set<ProcessId> {recipient});
+    };
+
+    virtual Packet sendOthers(MessageType messageType, const std::string& message) {
+        return send(messageType, message, otherProcesses);
+    };
 
     virtual Packet receive() = 0;
 

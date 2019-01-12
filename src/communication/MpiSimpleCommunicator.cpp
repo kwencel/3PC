@@ -1,6 +1,5 @@
-#include <mutex>
-#include <iostream>
 #include "MpiSimpleCommunicator.h"
+#include <iostream>
 
 Packet MpiSimpleCommunicator::send(MessageType messageType, const std::string& message,
                                    const std::unordered_set<ProcessId>& recipients, MpiTag tag) {
@@ -28,26 +27,6 @@ Packet MpiSimpleCommunicator::send(MessageType messageType, const std::string& m
     };
 
     return packet;
-}
-
-Packet MpiSimpleCommunicator::send(MessageType messageType, const std::string& message, ProcessId recipient, MpiTag tag) {
-    return send(messageType, message, std::unordered_set<ProcessId> {recipient}, tag);
-}
-
-Packet MpiSimpleCommunicator::send(MessageType messageType, const std::string& message, const std::unordered_set<ProcessId>& recipients) {
-    return send(messageType, message, recipients, MPI_DEFAULT_TAG);
-}
-
-Packet MpiSimpleCommunicator::send(MessageType messageType, const std::string& message, ProcessId recipient) {
-    return send(messageType, message, std::unordered_set<ProcessId> {recipient});
-}
-
-Packet MpiSimpleCommunicator::sendOthers(MessageType messageType, const std::string& message, MpiTag tag) {
-    return send(messageType, message, otherProcesses, tag);
-}
-
-Packet MpiSimpleCommunicator::sendOthers(MessageType messageType, const std::string& message) {
-    return sendOthers(messageType, message, MPI_DEFAULT_TAG);
 }
 
 Packet MpiSimpleCommunicator::receive(MpiTag tag) {
@@ -126,13 +105,18 @@ std::optional<Packet> MpiSimpleCommunicator::receive(long timeoutMillis) {
     return receive(timeoutMillis, MPI_ANY_TAG);
 }
 
+
+MpiTag MpiSimpleCommunicator::getDefaultTag() const {
+    return MPI_DEFAULT_TAG;
+}
+
 MpiSimpleCommunicator::MpiSimpleCommunicator(int argc, char** argv) {
     int provided = 0;
     MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
     /*************** Create a type for a custom 'RawPacket' structure ***************/
     const int blockLengths[] = {1, 1, 1};
     const int fields = sizeof(blockLengths) / sizeof(*blockLengths);
-    MPI_Datatype types[] = {MPI_UINT64_T, MPI_UINT8_T, MPI_UINT32_T};
+    MPI_Datatype types[] = {MPI_ENCODED_LAMPORT_TIME, MPI_ENCODED_MESSAGE_TYPE, MPI_NEXT_PACKET_LENGTH};
     MPI_Aint offsets[fields];
 
     offsets[0] = offsetof(RawPacket, lamportTime);

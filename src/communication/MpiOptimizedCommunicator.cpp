@@ -1,4 +1,3 @@
-#include <logging/Logger.h>
 #include "MpiOptimizedCommunicator.h"
 
 Packet MpiOptimizedCommunicator::send(MessageType messageType, const std::string& message,

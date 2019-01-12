@@ -5,6 +5,9 @@
 #include <util/Define.h>
 #include <util/Utils.h>
 
+using ProcessId = int;
+using LamportTime = unsigned long;
+
 struct Packet {
     LamportTime lamportTime;
     ProcessId source;

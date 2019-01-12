@@ -12,10 +12,6 @@
 #define COORDINATOR_ID 0
 #define MPI_CRASH_TAG 100
 
-using ProcessId = int;
-using SubscriptionId = std::size_t;
-using LamportTime = unsigned long;
-
 enum State : unsigned char {
     Q, W, A, P ,C
 };

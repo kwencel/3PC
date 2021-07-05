@@ -18,7 +18,7 @@ public:
     ~MultiprocessDebugHelper() = delete;
 
 private:
-    static void cleanup(int i);
+    static void cleanup([[maybe_unused]] int i);
 
     static int gdbServerPid;
 };

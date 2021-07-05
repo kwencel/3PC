@@ -65,7 +65,7 @@ public:
 
 protected:
 
-    Packet toPacket(RawPacket rawPacket, ProcessId source, std::string message);
+    static Packet toPacket(RawPacket rawPacket, ProcessId source, std::string message);
 
     MPI_Datatype mpiRawPacketType;
     std::recursive_mutex communicationMutex;

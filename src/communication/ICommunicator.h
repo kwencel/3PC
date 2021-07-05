@@ -1,6 +1,7 @@
 #ifndef INC_3PC_ICOMMUNICATOR_H
 #define INC_3PC_ICOMMUNICATOR_H
 
+#include <optional>
 #include <unordered_set>
 #include <util/Define.h>
 #include <util/Utils.h>

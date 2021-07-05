@@ -92,7 +92,7 @@ public:
                     this->logWithState("Entered state A - aborted the transaction!");
                     this->terminate = true;
                     return;
-                };
+                }
                 case C: {
                     this->logWithState("Entered state C - committed the transaction!");
                     this->terminate = true;

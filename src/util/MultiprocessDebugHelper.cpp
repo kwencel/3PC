@@ -38,7 +38,7 @@ int MultiprocessDebugHelper::setup(int port) {
     return gdbServerPid;
 }
 
-void MultiprocessDebugHelper::cleanup(int i) {
+void MultiprocessDebugHelper::cleanup([[maybe_unused]] int i) {
     kill(gdbServerPid, SIGKILL);
 //    system("killall gdbserver");
 }

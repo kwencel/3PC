@@ -75,7 +75,7 @@ public:
                     this->logWithState("Entered state A - aborted the transaction!");
                     this->terminate = true;
                     return;
-                };
+                }
                 case C: {
                     this->logWithState("Entered state C - committed the transaction!");
                     this->terminate = true;
@@ -123,7 +123,7 @@ private:
 
     template <typename Container>
     bool checkPackets(Container packets, MessageType expectedType, const std::string& expectedMessage) {
-        return std::all_of(packets.begin(), packets.end(), [&](Packet p) { return p.messageType == expectedType and
+        return std::all_of(packets.begin(), packets.end(), [&](const Packet& p) { return p.messageType == expectedType and
                                                                                   p.message == expectedMessage; });
     }
 

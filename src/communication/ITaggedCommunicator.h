@@ -9,7 +9,7 @@ public:
 
     virtual Packet send(MessageType messageType, const std::string& message, const std::unordered_set<ProcessId>& recipients, Tag tag) = 0;
 
-    virtual Packet send(MessageType messageType, const std::string& message, const std::unordered_set<ProcessId>& recipients) override {
+    Packet send(MessageType messageType, const std::string& message, const std::unordered_set<ProcessId>& recipients) override {
         return send(messageType, message, recipients, getDefaultTag());
     }
 
